@@ -20,11 +20,10 @@ def main():
     print(f"Part 2: {part_2()} took: {part_2_execution_time:.4f} seconds.")
 
 def parse(file_path):
+    global parsed
     with open(file_path, 'r') as file:
         for line in file:
             pass
-    
-    parsed = []
 
 def part_1():
     pass
