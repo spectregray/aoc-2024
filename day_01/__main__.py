@@ -17,8 +17,8 @@ def main():
     parse(file_path)
     part_1_execution_time = timeit.timeit('part_1()', globals=globals(), number=1) 
     part_2_execution_time = timeit.timeit('part_2()', globals=globals(), number=1) 
-    print(f"Part 1: {part_1()} took: {part_1_execution_time:.4f} seconds.")
-    print(f"Part 2: {part_2()} took: {part_2_execution_time:.4f} seconds.")
+    print(f"Part 1: {part_1()}. Took: {part_1_execution_time:.4f} seconds.")
+    print(f"Part 2: {part_2()}. Took: {part_2_execution_time:.4f} seconds.")
 
 def parse(file_path):
     global parsed
