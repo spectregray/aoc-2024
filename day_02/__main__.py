@@ -32,6 +32,7 @@ def parse(file_path):
             parsed.append(nums)
 
 """
+Part 1: O(n)
 Check if first difference is increasing or decreasing, then compares the rest of
 the numbers in the report to see if they follow the same pattern.  
 """
@@ -51,74 +52,88 @@ def part_1():
 
     return safe_count
 
-""" 
-Attempt at single iteration solution. It comes pretty close but misses an edge case.
+"""
+Part 2: O(n) solution, brute force below this
 
-O(n)
+For an input.txt with 1000 lines:
+1000x Runtime average: 0.0029 seconds
+1000x Brute Force Runtime average: 0.0064 seconds
 """
 def part_2():
+    """
+    Helpers
+    """
+    def attempt_skip(i):
+        """
+        Attempt to skip the number at index i by checking if the difference
+        between i - 1 and i + 1 is still valid.
+        """
+        if i - 1 >= 0 and i + 1 < len(report):
+            return is_valid_diff(report[i - 1] - report[i + 1])
+        return True
+
+    def is_valid_diff(diff):
+        return (diff < 0) == is_increasing and (1 <= abs(diff) <= 3)
+    
+    """
+    Main body 
+    """
     safe_count = 0
 
     for report in parsed:
+        normalized_set = set() # values 0, -1, or 1
+        is_increasing = None # boolean
+        skip_index = None
+
         """
-        We can look at the first 3 differences to tell whether the report should
-        be predominantly increasing or decreasing. We give a "freebee" to one 
-        faulty difference.
+        Based on the first 3 differences, finds out if the rest of the report
+        should be predominantly increasing or decreasing. Fails entire report
+        early if no two differences are the same.
         """
-        diff_set = set()
-        is_increasing = None
-        for i, number in enumerate(report[1:min(4, len(report))]):
-            diff = report[i] - number
+        for i in range(min(len(report) - 1, 4)):
+            diff = report[i] - report[i + 1]
             normalized_diff = diff / abs(diff) if diff != 0 else 0
-            if normalized_diff in diff_set and diff != 0: 
-                # we found a diff that appears 2x
+            if normalized_diff in normalized_set:
                 is_increasing = diff < 0
                 break
-            else:
-                diff_set.add(normalized_diff)
-        else: # case where no diff appeared twice or a 0 appeared twice
-            continue
-        
-        def is_valid(diff):
-            return (diff < 0) == is_increasing and (1 <= abs(diff) <= 3)
-        
-        invalid_diff_count = 0
-        prev_unsafe_i = None
+            normalized_set.add(normalized_diff)
+        else:
+            continue # if first 3 diff are all unique, this report will fail regardless
 
-        def validate_remove_i(i):
-            nonlocal invalid_diff_count
-            if i - 1 >= 0:
-                left_diff = report[i - 1] - report[i]
-                invalid_diff_count -= 1 if not is_valid(left_diff) else 0
-            if i + 1 < len(report):
-                right_diff = report[i] - report[i + 1]
-                invalid_diff_count -= 1 if not is_valid(right_diff) else 0
-                new_diff = report[i - 1] - report[i + 1]
-                invalid_diff_count += 1 if not is_valid(new_diff) else 0
-            return invalid_diff_count == 0
-
-        for i, number in enumerate(report[1:]):
-            diff = report[i] - number
-            invalid_diff_count += 1 if not is_valid(diff) else 0
-
-            if (diff < 0) != is_increasing or not (1 <= abs(diff) <= 3):
-                if prev_unsafe_i is None:
-                    prev_unsafe_i = i + 2
-                    if i + 2 < len(report):
-                        diff = report[i + 1] - report[i + 2]
-                        invalid_diff_count += 1 if not is_valid(diff) else 0
-                    if validate_remove_i(i) or validate_remove_i(i + 1):
-                        continue
-                    else:
-                        break # removing either does not work, so this report fails
-                else:
+        """
+        Iterates through the report. If an invalid difference has been found,
+        records index of the index to be removed. If another invalid difference 
+        is found after, fails.
+        """
+        for i in range(len(report) - 1):
+            if skip_index == i:
+                prev_diff = report[i - 1] - report[i + 1]
+                if not is_valid_diff(prev_diff):
                     break
+            else:
+                diff = report[i] - report[i + 1]
+
+                if not is_valid_diff(diff):
+                    if skip_index is not None:
+                        break
+                    """
+                    If we reach an invalid pair, we should check if the report 
+                    works with either of the values removed. We greedily check
+                    the second value of the pair first.
+                    """
+                    if attempt_skip(i + 1):
+                        skip_index = i + 1
+                    elif attempt_skip(i):
+                        skip_index = i
+                    if skip_index is None:
+                        break
         else:
             safe_count += 1
 
     return safe_count
 
 """
+Part 2: Brute force
 O(n^2)
 """
 def part_2_brute():
